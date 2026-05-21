@@ -14,6 +14,8 @@ export interface NovelInfo {
   inLibrary?: boolean | null;
   isLocal?: boolean | null;
   totalPages?: number | null;
+  autoTranslate?: boolean | null;
+  translationLang?: string | null;
 }
 
 export interface DBNovelInfo extends NovelInfo {
