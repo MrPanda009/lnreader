@@ -39,6 +39,8 @@ export interface ChapterInfo {
   page: string | null;
   progress: number | null;
   position?: number | null;
+  translatedContent?: string | null;
+  translationLang?: string | null;
 }
 
 export interface DownloadedChapter extends ChapterInfo {

@@ -42,6 +42,8 @@ import {
   markPreviuschaptersRead,
   markPreviousChaptersUnread,
   clearUpdates,
+  saveChapterTranslation,
+  clearChapterTranslation,
 } from '../ChapterQueries';
 
 describe('ChapterQueries', () => {
@@ -1132,6 +1134,39 @@ describe('ChapterQueries', () => {
 
       const result = isChapterDownloaded(chapterId);
       expect(result).toBe(false);
+    });
+  });
+
+  describe('saveChapterTranslation', () => {
+    it('should save translated content and lang', async () => {
+      const testDb = getTestDb();
+      const novelId = await insertTestNovel(testDb, { inLibrary: true });
+      const chapterId = await insertTestChapter(testDb, novelId);
+
+      await saveChapterTranslation(chapterId, '<p>Translated Content</p>', 'es');
+
+      const chapters = await getNovelChapters(novelId);
+      const chapter = chapters.find(c => c.id === chapterId);
+      expect(chapter?.translatedContent).toBe('<p>Translated Content</p>');
+      expect(chapter?.translationLang).toBe('es');
+    });
+  });
+
+  describe('clearChapterTranslation', () => {
+    it('should clear translated content and lang', async () => {
+      const testDb = getTestDb();
+      const novelId = await insertTestNovel(testDb, { inLibrary: true });
+      const chapterId = await insertTestChapter(testDb, novelId, {
+        translatedContent: '<p>Translated Content</p>',
+        translationLang: 'es',
+      });
+
+      await clearChapterTranslation(chapterId);
+
+      const chapters = await getNovelChapters(novelId);
+      const chapter = chapters.find(c => c.id === chapterId);
+      expect(chapter?.translatedContent).toBeNull();
+      expect(chapter?.translationLang).toBeNull();
     });
   });
 });

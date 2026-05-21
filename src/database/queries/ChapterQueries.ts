@@ -328,6 +328,32 @@ export const clearUpdates = async (): Promise<void> => {
   });
 };
 
+// Save translation result for a chapter
+export const saveChapterTranslation = async (
+  chapterId: number,
+  translatedContent: string,
+  lang: string,
+): Promise<void> => {
+  await dbManager.write(async tx => {
+    await tx
+      .update(chapterSchema)
+      .set({ translatedContent, translationLang: lang })
+      .where(eq(chapterSchema.id, chapterId))
+      .run();
+  });
+};
+
+// Clear translation (so user can re-translate with a different lang)
+export const clearChapterTranslation = async (chapterId: number): Promise<void> => {
+  await dbManager.write(async tx => {
+    await tx
+      .update(chapterSchema)
+      .set({ translatedContent: null, translationLang: null })
+      .where(eq(chapterSchema.id, chapterId))
+      .run();
+  });
+};
+
 // #endregion
 // #region Selectors
 
@@ -510,7 +536,7 @@ export const getPageChaptersBatched = async (
   filter?: ChapterFilterKey[],
   page?: string,
   batch: number = 0,
-) => {
+): Promise<ChapterInfo[]> => {
   const limit = 1000;
   const offset = 1000 * batch;
   const query = dbManager
