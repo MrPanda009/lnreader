@@ -6,6 +6,7 @@ import {
 } from '@screens/library/constants/constants';
 import { Voice } from 'expo-speech';
 import { useMMKVObject } from 'react-native-mmkv';
+import { ProviderId } from '@services/translation';
 
 export const APP_SETTINGS = 'APP_SETTINGS';
 export const BROWSE_SETTINGS = 'BROWSE_SETTINGS';
@@ -92,6 +93,12 @@ export interface ChapterGeneralSettings {
   TTSEnable: boolean;
   googleTranslateApiKey: string;
   translationTargetLang: string;
+  translationProvider: ProviderId;
+  googleApiKey: string;
+  deeplApiKey: string;
+  deeplPlan: 'free' | 'pro';
+  microsoftApiKey: string;
+  microsoftRegion: string;
 }
 
 export interface ReaderTheme {
@@ -190,6 +197,12 @@ export const initialChapterGeneralSettings: ChapterGeneralSettings = {
   TTSEnable: true,
   googleTranslateApiKey: '',
   translationTargetLang: 'en',
+  translationProvider: 'gtx',
+  googleApiKey: '',
+  deeplApiKey: '',
+  deeplPlan: 'free',
+  microsoftApiKey: '',
+  microsoftRegion: '',
 };
 
 export const initialChapterReaderSettings: ChapterReaderSettings = {
