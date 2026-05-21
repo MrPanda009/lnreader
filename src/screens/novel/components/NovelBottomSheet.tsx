@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { StyleSheet, View, Text, useWindowDimensions } from 'react-native';
 import color from 'color';
 
@@ -14,6 +14,13 @@ import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/typ
 import { ThemeColors } from '@theme/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNovelSettings } from '@hooks/persisted/useNovelSettings';
+
+import { useNovelActions, useNovelValue } from '../NovelContext';
+import { useTranslation } from '@hooks/persisted';
+import { List, SwitchItem } from '@components';
+import { updateNovelInfo } from '@database/queries/NovelQueries';
+import { NovelInfo } from '@database/types';
+import { LANGUAGES, LanguagePickerModal } from '../../settings/SettingsReaderScreen/Settings/TranslationSettings';
 
 interface ChaptersSettingsSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModalMethods | null>;
@@ -34,6 +41,13 @@ const ChaptersSettingsSheet = ({
     showChapterTitles,
   } = useNovelSettings();
 
+  const novel = useNovelValue('novel');
+  const chapters = useNovelValue('chapters');
+  const { setNovel } = useNovelActions();
+  const { translateChapters, isAnyTranslating } = useTranslation();
+
+  const [langVisible, setLangVisible] = useState(false);
+
   const { left, right } = useSafeAreaInsets();
   const readStatus = getChapterFilterState('read');
   const unreadStatus =
@@ -42,6 +56,31 @@ const ChaptersSettingsSheet = ({
       : readStatus
       ? 'indeterminate'
       : false;
+
+  const updateNovel = useCallback(
+    (updates: Partial<NovelInfo>) => {
+      if (!novel) {
+        return;
+      }
+      const updatedNovel = { ...novel, ...updates };
+      setNovel(updatedNovel);
+      updateNovelInfo(updatedNovel);
+    },
+    [novel, setNovel],
+  );
+
+  const downloadedChapters = useMemo(
+    () => chapters.filter(c => c.isDownloaded),
+    [chapters],
+  );
+
+  const untranslatedCount = useMemo(
+    () =>
+      downloadedChapters.filter(
+        c => !c.translatedContent || c.translationLang !== novel?.translationLang,
+      ).length,
+    [downloadedChapters, novel?.translationLang],
+  );
 
   const FirstRoute = useCallback(
     () => (
@@ -151,10 +190,63 @@ const ChaptersSettingsSheet = ({
     [setShowChapterTitles, showChapterTitles, theme],
   );
 
+  const FourthRoute = useCallback(
+    () => (
+      <View style={styles.flex}>
+        <List.Subheader theme={theme}>Translation</List.Subheader>
+
+        <SwitchItem
+          label="Auto-translate chapters"
+          value={!!novel?.autoTranslate}
+          onPress={() => updateNovel({ autoTranslate: !novel?.autoTranslate })}
+          theme={theme}
+        />
+
+        {novel?.autoTranslate ? (
+          <>
+            <List.Item
+              title="Translate to"
+              description={LANGUAGES.find(l => l.code === novel?.translationLang)?.label || 'Not selected'}
+              icon="web"
+              onPress={() => setLangVisible(true)}
+              theme={theme}
+            />
+            <List.Item
+              title="Translate all downloaded chapters"
+              description={
+                isAnyTranslating
+                  ? 'Translating chapters...'
+                  : `${untranslatedCount} chapters not yet translated`
+              }
+              onPress={() => {
+                if (!isAnyTranslating && downloadedChapters.length > 0 && novel) {
+                  translateChapters(downloadedChapters, novel);
+                }
+              }}
+              disabled={isAnyTranslating || downloadedChapters.length === 0}
+              theme={theme}
+              icon="translate"
+            />
+          </>
+        ) : null}
+      </View>
+    ),
+    [
+      theme,
+      novel,
+      updateNovel,
+      isAnyTranslating,
+      untranslatedCount,
+      downloadedChapters,
+      translateChapters,
+    ],
+  );
+
   const renderScene = SceneMap({
     first: FirstRoute,
     second: SecondRoute,
     third: ThirdRoute,
+    fourth: FourthRoute,
   });
 
   const layout = useWindowDimensions();
@@ -164,6 +256,7 @@ const ChaptersSettingsSheet = ({
     { key: 'first', title: getString('common.filter') },
     { key: 'second', title: getString('common.sort') },
     { key: 'third', title: getString('common.display') },
+    { key: 'fourth', title: 'Translate' },
   ]);
 
   const renderTabBar: TabViewProps<any>['renderTabBar'] = props => (
@@ -189,35 +282,45 @@ const ChaptersSettingsSheet = ({
     },
     [],
   );
+
   return (
-    <BottomSheet
-      snapPoints={[240]}
-      bottomSheetRef={bottomSheetRef}
-      backgroundStyle={styles.transparent}
-    >
-      <BottomSheetView
-        style={[
-          styles.contentContainer,
-          {
-            backgroundColor: overlay(2, theme.surface),
-            marginLeft: left,
-            marginRight: right,
-          },
-        ]}
+    <>
+      <BottomSheet
+        snapPoints={[280]}
+        bottomSheetRef={bottomSheetRef}
+        backgroundStyle={styles.transparent}
       >
-        <TabView
-          commonOptions={{
-            label: renderLabel,
-          }}
-          navigationState={{ index, routes }}
-          renderTabBar={renderTabBar}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{ width: layout.width }}
-          style={styles.tabView}
-        />
-      </BottomSheetView>
-    </BottomSheet>
+        <BottomSheetView
+          style={[
+            styles.contentContainer,
+            {
+              backgroundColor: overlay(2, theme.surface),
+              marginLeft: left,
+              marginRight: right,
+            },
+          ]}
+        >
+          <TabView
+            commonOptions={{
+              label: renderLabel,
+            }}
+            navigationState={{ index, routes }}
+            renderTabBar={renderTabBar}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={{ width: layout.width }}
+            style={styles.tabView}
+          />
+        </BottomSheetView>
+      </BottomSheet>
+      <LanguagePickerModal
+        visible={langVisible}
+        onDismiss={() => setLangVisible(false)}
+        currentLanguage={novel?.translationLang || ''}
+        onSelect={lang => updateNovel({ translationLang: lang })}
+        languages={LANGUAGES}
+      />
+    </>
   );
 };
 
@@ -232,7 +335,7 @@ const styles = StyleSheet.create({
   tabView: {
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
-    height: 240,
+    height: 280,
   },
   transparent: {
     backgroundColor: 'transparent',

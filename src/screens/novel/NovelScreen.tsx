@@ -122,7 +122,9 @@ const Novel = ({ route, navigation }: NovelScreenProps) => {
       list.push({
         icon: 'translate',
         onPress: () => {
-          translateChapters(selected);
+          if (novel) {
+            translateChapters(selected, novel);
+          }
           setSelected([]);
         },
       });
@@ -216,6 +218,7 @@ const Novel = ({ route, navigation }: NovelScreenProps) => {
     novel,
     refreshChapters,
     selected,
+    translateChapters,
   ]);
 
   const setCustomNovelCover = useCallback(async () => {

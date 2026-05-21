@@ -110,7 +110,8 @@ const NovelScreenList = ({
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
 
   const { downloadingChapterIds, downloadChapter } = useDownload();
-  const { translateChapter, clearTranslation, isTranslating, translatingIds } = useTranslation();
+  const { translateChapter, clearTranslation, isTranslating, translatingIds } =
+    useTranslation();
   const { translationTargetLang } = useChapterGeneralSettings();
 
   // Mark chapters as downloaded when their download completes
@@ -514,7 +515,7 @@ const NovelScreenList = ({
               onSelectLongPress={onSelectLongPress}
               isTranslating={isTranslating(item.id)}
               translationTargetLang={translationTargetLang}
-              onTranslateChapter={translateChapter}
+              onTranslateChapter={ch => translateChapter(ch, novel)}
               onClearTranslation={clearTranslation}
             />
           );

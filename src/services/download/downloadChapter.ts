@@ -4,9 +4,11 @@ import { Plugin } from '@plugins/types';
 import { downloadFile } from '@plugins/helpers/fetch';
 import { getPlugin } from '@plugins/pluginManager';
 import { getString } from '@strings/translations';
-import { getChapter } from '@database/queries/ChapterQueries';
+import { getChapter, saveChapterTranslation } from '@database/queries/ChapterQueries';
 import { sleep } from '@utils/sleep';
 import { getNovelById } from '@database/queries/NovelQueries';
+import { getMMKVObject } from '@utils/mmkv/mmkv';
+import { translateChapterContent, ProviderConfig } from '@services/translation';
 import { dbManager } from '@database/db';
 import { chapterSchema } from '@database/schema';
 import { BackgroundTaskMetadata } from '@services/ServiceManager';
@@ -95,6 +97,28 @@ export const downloadChapter = async (
         .where(eq(chapterSchema.id, chapter.id))
         .run();
     });
+
+    if (novel.autoTranslate && novel.translationLang) {
+      try {
+        const settings = getMMKVObject<any>('CHAPTER_GENERAL_SETTINGS') || {};
+        const config: ProviderConfig = {
+          googleApiKey: settings.googleApiKey,
+          deeplApiKey: settings.deeplApiKey,
+          deeplPlan: settings.deeplPlan,
+          microsoftApiKey: settings.microsoftApiKey,
+          microsoftRegion: settings.microsoftRegion,
+        };
+        const translated = await translateChapterContent(
+          chapterText,
+          novel.translationLang,
+          settings.translationProvider || 'gtx',
+          config,
+        );
+        await saveChapterTranslation(chapter.id, translated, novel.translationLang);
+      } catch {
+        // ignore translation error, don't fail the download
+      }
+    }
 
     await sleep(1000);
   } else {

@@ -160,6 +160,7 @@ const ColorItem = ({ title, color, theme, onPress }: ColorItemProps) => (
 export default {
   Section,
   SubHeader,
+  Subheader: SubHeader,
   Item,
   Divider,
   InfoItem,

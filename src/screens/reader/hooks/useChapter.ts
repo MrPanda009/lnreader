@@ -12,6 +12,7 @@ import {
   useLibrarySettings,
   useTrackedNovel,
   useTracker,
+  useTranslation,
 } from '@hooks/persisted';
 import { fetchChapter, fetchPage } from '@services/plugin/fetch';
 import { NOVEL_STORAGE } from '@utils/Storages';
@@ -49,6 +50,7 @@ export default function useChapter(
     updateChapterProgress,
     chapterTextCache,
   } = useNovelActions();
+  const { translateChapter } = useTranslation();
 
   const [hidden, setHidden] = useState(true);
   const [chapter, setChapter] = useState(initialChapter);
@@ -140,6 +142,22 @@ export default function useChapter(
           ],
         );
 
+        if (
+          novel.autoTranslate &&
+          novel.translationLang &&
+          !chap.translatedContent
+        ) {
+          setLoading(true);
+          try {
+            chap.content = awaitedText;
+            await translateChapter(chap, novel);
+            const updatedChap = await getDbChapter(chap.id);
+            if (updatedChap) {
+              chap = { ...chap, ...updatedChap };
+            }
+          } catch {}
+        }
+
         let nextChap = nextChapResult;
         let prevChap = prevChapResult;
         const totalPages = novel.totalPages ?? 0;
@@ -222,11 +240,9 @@ export default function useChapter(
       loadChapterText,
       setChapter,
       setChapterText,
-      novel.pluginId,
-      novel.name,
-      novel.path,
-      novel.totalPages,
       setLoading,
+      translateChapter,
+      novel,
     ],
   );
 
