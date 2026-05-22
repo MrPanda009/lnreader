@@ -24,7 +24,7 @@ export function useTranslation() {
   chaptersRef.current = chapters;
 
   const translateChapter = useCallback(
-    async (chapter: ChapterInfo, novel: NovelInfo) => {
+    async (chapter: ChapterInfo, novel: NovelInfo, silent = false) => {
       const targetLang = novel.translationLang || 'en';
 
       // Cache hit — already translated into the current target lang
@@ -70,13 +70,17 @@ export function useTranslation() {
             translationLang: targetLang,
           });
         }
-        showToast(getString('common.translated') || 'Chapter translated!');
+        if (!silent) {
+          showToast(getString('common.translated') || 'Chapter translated!');
+        }
       } catch (error: any) {
         const errorMsg = error?.message || 'Translation failed';
-        showToast(
-          getString('common.translationFailed', { error: errorMsg }) ||
-            `Translation failed: ${errorMsg}`,
-        );
+        if (!silent) {
+          showToast(
+            getString('common.translationFailed', { error: errorMsg }) ||
+              `Translation failed: ${errorMsg}`,
+          );
+        }
         throw error;
       } finally {
         setTranslatingIds(prev => {
@@ -92,8 +96,25 @@ export function useTranslation() {
   // Sequential to avoid hammering the API
   const translateChapters = useCallback(
     async (chaptersToTranslate: ChapterInfo[], novel: NovelInfo) => {
+      let successCount = 0;
+      let failCount = 0;
       for (const ch of chaptersToTranslate) {
-        await translateChapter(ch, novel).catch(() => {});
+        try {
+          await translateChapter(ch, novel, true);
+          successCount++;
+        } catch {
+          failCount++;
+        }
+      }
+      if (successCount > 0) {
+        showToast(
+          getString('common.bulkTranslated', { count: successCount }) ||
+            `Translated ${successCount} chapters!`
+        );
+      } else if (failCount > 0) {
+        showToast(
+          getString('common.bulkTranslationFailed') || 'Bulk translation failed'
+        );
       }
     },
     [translateChapter],

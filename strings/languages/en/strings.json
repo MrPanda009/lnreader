@@ -239,7 +239,9 @@
     "translated": "Chapter translated!",
     "translationFailed": "Translation failed: %{error}",
     "noApiKey": "No API key set. Add one in Reader Settings → Translation.",
-    "translationsCleared": "Translations cleared!"
+    "translationsCleared": "Translations cleared!",
+    "bulkTranslated": "Translated %{count} chapters!",
+    "bulkTranslationFailed": "Bulk translation failed"
   },
   "webview": {
     "refresh": "Refresh",

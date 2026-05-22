@@ -46,11 +46,11 @@ const TranslationModal = ({
     [chapters],
   );
 
-  const untranslatedCount = useMemo(
+  const untranslatedChapters = useMemo(
     () =>
       downloadedChapters.filter(
         c => !c.translatedContent || c.translationLang !== novel?.translationLang,
-      ).length,
+      ),
     [downloadedChapters, novel?.translationLang],
   );
 
@@ -95,14 +95,14 @@ const TranslationModal = ({
               description={
                 isAnyTranslating
                    ? 'Translating chapters...'
-                   : `${untranslatedCount} chapters not yet translated`
+                   : `${untranslatedChapters.length} chapters not yet translated`
               }
               onPress={() => {
-                if (!isAnyTranslating && downloadedChapters.length > 0 && novel) {
-                   translateChapters(downloadedChapters, novel);
+                if (!isAnyTranslating && untranslatedChapters.length > 0 && novel) {
+                   translateChapters(untranslatedChapters, novel);
                 }
               }}
-              disabled={isAnyTranslating || downloadedChapters.length === 0}
+              disabled={isAnyTranslating || untranslatedChapters.length === 0}
               theme={theme}
               icon="translate"
             />
@@ -110,8 +110,8 @@ const TranslationModal = ({
               title="Clear all translations"
               description={
                 isAnyTranslating
-                  ? 'Clearing translations...'
-                  : `${translatedChapters.length} translated chapters`
+                   ? 'Clearing translations...'
+                   : `${translatedChapters.length} translated chapters`
               }
               onPress={() => {
                 if (!isAnyTranslating && translatedChapters.length > 0) {
