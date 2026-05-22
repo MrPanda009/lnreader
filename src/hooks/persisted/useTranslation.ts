@@ -9,6 +9,8 @@ import { ChapterInfo, NovelInfo } from '@database/types';
 import { showToast } from '@utils/showToast';
 import { getString } from '@strings/translations';
 import { useNovelActions, useNovelValue } from '@screens/novel/NovelContext';
+import { NOVEL_STORAGE } from '@utils/Storages';
+import NativeFile from '@specs/NativeFile';
 
 export function useTranslation() {
   const [translatingIds, setTranslatingIds] = useState<Set<number>>(new Set());
@@ -32,6 +34,18 @@ export function useTranslation() {
 
       setTranslatingIds(prev => new Set(prev).add(chapter.id));
       try {
+        let content = chapter.content || '';
+        if (!content && chapter.isDownloaded) {
+          const filePath = `${NOVEL_STORAGE}/${novel.pluginId}/${chapter.novelId}/${chapter.id}/index.html`;
+          if (NativeFile.exists(filePath)) {
+            content = NativeFile.readFile(filePath);
+          }
+        }
+
+        if (!content) {
+          throw new Error('Chapter content is empty or not downloaded');
+        }
+
         const config: ProviderConfig = {
           googleApiKey: settings.googleApiKey,
           deeplApiKey: settings.deeplApiKey,
@@ -41,7 +55,7 @@ export function useTranslation() {
         };
 
         const translated = await translateChapterContent(
-          chapter.content || '',
+          content,
           targetLang,
           settings.translationProvider,
           config,
