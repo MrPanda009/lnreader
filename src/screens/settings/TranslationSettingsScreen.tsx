@@ -2,25 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text, Pressable } from 'react-native';
 import { TextInput, Portal, RadioButton as PaperRadioButton } from 'react-native-paper';
 import { useChapterGeneralSettings, useTheme } from '@hooks/persisted';
-import { List, Modal, Button, RadioButton, SegmentedControl, SafeAreaView, Appbar } from '@components';
+import { List, Modal, Button, SegmentedControl, SafeAreaView, Appbar } from '@components';
 import { getString } from '@strings/translations';
 import { ProviderId } from '@services/translation';
 import { TranslationSettingsScreenProps } from '@navigators/types';
 
-export const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'Hindi' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'fr', label: 'French' },
-  { code: 'de', label: 'German' },
-  { code: 'pt', label: 'Portuguese' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'zh', label: 'Chinese (Simplified)' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'ko', label: 'Korean' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'id', label: 'Indonesian' },
-];
 
 export interface TextInputModalProps {
   visible: boolean;
@@ -75,48 +61,6 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
           />
           <Button title={getString('common.cancel')} onPress={onDismiss} />
         </View>
-      </Modal>
-    </Portal>
-  );
-};
-
-export interface LanguagePickerModalProps {
-  visible: boolean;
-  onDismiss: () => void;
-  currentLanguage: string;
-  onSelect: (lang: string) => void;
-  languages: { code: string; label: string }[];
-}
-
-export const LanguagePickerModal: React.FC<LanguagePickerModalProps> = ({
-  visible,
-  onDismiss,
-  currentLanguage,
-  onSelect,
-  languages,
-}) => {
-  const theme = useTheme();
-
-  return (
-    <Portal>
-      <Modal visible={visible} onDismiss={onDismiss}>
-        <Text style={[styles.modalTitle, { color: theme.onSurface }]}>
-          Translate to
-        </Text>
-        <ScrollView style={styles.scroll}>
-          {languages.map(item => (
-            <RadioButton
-              key={item.code}
-              status={currentLanguage === item.code}
-              onPress={() => {
-                onSelect(item.code);
-                onDismiss();
-              }}
-              label={item.label}
-              theme={theme}
-            />
-          ))}
-        </ScrollView>
       </Modal>
     </Portal>
   );

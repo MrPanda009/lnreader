@@ -29,6 +29,14 @@ jest.mock('@hooks/persisted', () => ({
   useLibrarySettings: () => mockUseLibrarySettings(),
   useTracker: () => mockUseTracker(),
   useTrackedNovel: (...args: unknown[]) => mockUseTrackedNovel(...args),
+  useTranslation: () => ({
+    translateChapter: jest.fn(() => Promise.resolve()),
+    translateChapters: jest.fn(() => Promise.resolve()),
+    clearTranslation: jest.fn(() => Promise.resolve()),
+    clearAllTranslations: jest.fn(() => Promise.resolve()),
+    isTranslating: jest.fn(() => false),
+    isAnyTranslating: false,
+  }),
 }));
 
 jest.mock('@hooks', () => ({

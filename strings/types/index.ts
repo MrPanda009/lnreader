@@ -212,6 +212,7 @@ export interface StringMap {
   'common.translated': 'string';
   'common.translationFailed': 'string';
   'common.noApiKey': 'string';
+  'common.translationsCleared': 'string';
   'webview.refresh': 'string';
   'webview.share': 'string';
   'webview.openInBrowser': 'string';

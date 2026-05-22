@@ -7,7 +7,7 @@ import { getString } from '@strings/translations';
 import { Modal, SwitchItem, List, Button } from '@components';
 import { useTranslation } from '@hooks/persisted';
 import { updateNovelInfo } from '@database/queries/NovelQueries';
-import { LANGUAGES, LanguagePickerModal } from '../../settings/TranslationSettingsScreen';
+import { LANGUAGES, LanguagePickerModal } from '../../settings/components/LanguagePickerModal';
 
 interface TranslationModalProps {
   theme: ThemeColors;
@@ -26,7 +26,7 @@ const TranslationModal = ({
   chapters,
   setNovel,
 }: TranslationModalProps) => {
-  const { translateChapters, isAnyTranslating } = useTranslation();
+  const { translateChapters, isAnyTranslating, clearAllTranslations } = useTranslation();
   const [langVisible, setLangVisible] = useState(false);
 
   const updateNovel = useCallback(
@@ -52,6 +52,11 @@ const TranslationModal = ({
         c => !c.translatedContent || c.translationLang !== novel?.translationLang,
       ).length,
     [downloadedChapters, novel?.translationLang],
+  );
+
+  const translatedChapters = useMemo(
+    () => chapters.filter(c => c.translatedContent),
+    [chapters],
   );
 
   const onDismiss = () => {
@@ -100,6 +105,22 @@ const TranslationModal = ({
               disabled={isAnyTranslating || downloadedChapters.length === 0}
               theme={theme}
               icon="translate"
+            />
+            <List.Item
+              title="Clear all translations"
+              description={
+                isAnyTranslating
+                  ? 'Clearing translations...'
+                  : `${translatedChapters.length} translated chapters`
+              }
+              onPress={() => {
+                if (!isAnyTranslating && translatedChapters.length > 0) {
+                  clearAllTranslations(translatedChapters);
+                }
+              }}
+              disabled={isAnyTranslating || translatedChapters.length === 0}
+              theme={theme}
+              icon="delete-sweep"
             />
           </View>
         ) : null}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { translateChapterContent, ProviderConfig } from '@services/translation';
 import {
   saveChapterTranslation,
@@ -16,6 +16,10 @@ export function useTranslation() {
 
   const { updateChapter } = useNovelActions();
   const chapters = useNovelValue('chapters');
+
+  // Keep a ref to the latest chapters array to avoid stale closures in the async loop
+  const chaptersRef = useRef(chapters);
+  chaptersRef.current = chapters;
 
   const translateChapter = useCallback(
     async (chapter: ChapterInfo, novel: NovelInfo) => {
@@ -44,7 +48,8 @@ export function useTranslation() {
         );
         await saveChapterTranslation(chapter.id, translated, targetLang);
 
-        const index = chapters.findIndex(c => c.id === chapter.id);
+        const latestChapters = chaptersRef.current;
+        const index = latestChapters.findIndex(c => c.id === chapter.id);
         if (index !== -1) {
           updateChapter(index, {
             translatedContent: translated,
@@ -67,7 +72,7 @@ export function useTranslation() {
         });
       }
     },
-    [settings, chapters, updateChapter],
+    [settings, updateChapter],
   );
 
   // Sequential to avoid hammering the API
@@ -83,7 +88,8 @@ export function useTranslation() {
   const clearTranslation = useCallback(
     async (chapterId: number) => {
       await clearChapterTranslation(chapterId);
-      const index = chapters.findIndex(c => c.id === chapterId);
+      const latestChapters = chaptersRef.current;
+      const index = latestChapters.findIndex(c => c.id === chapterId);
       if (index !== -1) {
         updateChapter(index, {
           translatedContent: null,
@@ -91,7 +97,45 @@ export function useTranslation() {
         });
       }
     },
-    [chapters, updateChapter],
+    [updateChapter],
+  );
+
+  const clearAllTranslations = useCallback(
+    async (chaptersToClear: ChapterInfo[]) => {
+      setTranslatingIds(prev => {
+        const next = new Set(prev);
+        for (const ch of chaptersToClear) {
+          next.add(ch.id);
+        }
+        return next;
+      });
+
+      try {
+        for (const ch of chaptersToClear) {
+          await clearChapterTranslation(ch.id).catch(() => {});
+          const latestChapters = chaptersRef.current;
+          const index = latestChapters.findIndex(c => c.id === ch.id);
+          if (index !== -1) {
+            updateChapter(index, {
+              translatedContent: null,
+              translationLang: null,
+            });
+          }
+        }
+        showToast(getString('common.translationsCleared') || 'All translations cleared!');
+      } catch {
+        showToast('Failed to clear translations');
+      } finally {
+        setTranslatingIds(prev => {
+          const next = new Set(prev);
+          for (const ch of chaptersToClear) {
+            next.delete(ch.id);
+          }
+          return next;
+        });
+      }
+    },
+    [updateChapter],
   );
 
   return {
@@ -99,6 +143,7 @@ export function useTranslation() {
     translateChapter,
     translateChapters,
     clearTranslation,
+    clearAllTranslations,
     isTranslating: (id: number) => translatingIds.has(id),
     isAnyTranslating: translatingIds.size > 0,
   };

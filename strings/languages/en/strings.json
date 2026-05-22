@@ -238,7 +238,8 @@
     "warning": "Warning",
     "translated": "Chapter translated!",
     "translationFailed": "Translation failed: %{error}",
-    "noApiKey": "No API key set. Add one in Reader Settings → Translation."
+    "noApiKey": "No API key set. Add one in Reader Settings → Translation.",
+    "translationsCleared": "Translations cleared!"
   },
   "webview": {
     "refresh": "Refresh",
