@@ -24,7 +24,6 @@ export const chapter = sqliteTable(
     page: text('page').default('1'),
     position: integer('position').default(0),
     progress: integer('progress'),
-    translatedContent: text('translatedContent'),
     translationLang: text('translationLang'),
   },
   table => [
